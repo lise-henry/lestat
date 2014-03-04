@@ -5,4 +5,6 @@
             :url "https://www.gnu.org/copyleft/gpl.html"}
   :repositories [["erichseifert.de" "http://mvn.erichseifert.de/maven2"]]
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [de.erichseifert.gral/gral-core "0.10"]])
+                 [de.erichseifert.gral/gral-core "0.10"]]
+  :source-paths ["src"]
+  :main lestat.core)
