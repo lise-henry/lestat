@@ -1,11 +1,17 @@
 (ns lestat.analysis
-  (:import (com.xeiam.xchart Chart)))
+  (:import (com.xeiam.xchart Chart Series SeriesMarker)))
 
 ;; default parameters
 (def regexp-chapter-text #"Chapitre \d")
 (def regexp-chapter-markdown #"=====+")
 (def regexp-chapter regexp-chapter-markdown)
 (def regexp-word #"[\p{IsAlphabetic}|-]+")
+
+;; display preferences 
+;; todo: add gui
+(def prefs-marker? false) ;; whether there are markers or not
+(def prefs-floating-window 20000) ;; number of words to do stats
+(def prefs-floating-step 200) ;; step between each computation
 
 ;; todo: remove following and add gui
 (def file-name "/tmp/test.txt")
@@ -65,11 +71,13 @@
             (split-chapters text))))
 
 (defn data-by-words
-  [text n]
-  "String, Int -> Data
-   Give statistics for each chunk of n words"
+  [text]
+  "String -> Data
+   Give statistics for each chunk of prefs-floating-window words"
   (map count-all-characters
-       (partition n (split-words text))))
+       (partition prefs-floating-window 
+                  prefs-floating-step 
+                  (split-words text))))
 
 (defn data->chart
   "Data, List of Strings? -> Chart
@@ -78,13 +86,14 @@
   ([data]
      (data->chart data (map first targets)))
   ([data names]
-     (let [chart (Chart. 800 600)
-        xdata (map double (range (count data)))]
+     (let [chart (Chart. 500 300)]
        (doseq [n names]
-         (->> data
-              (map #(% n))
-              (map double)
-              (.addSeries chart n xdata)))
+         (let [series (->> data
+                           (map #(% n))
+                           (map double)
+                           (.addSeries chart n nil))]
+           (if-not prefs-marker?
+             (.setMarker series SeriesMarker/NONE))))
        chart)))
 
 (defn data-minimal
