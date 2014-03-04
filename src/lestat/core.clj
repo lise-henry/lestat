@@ -10,7 +10,7 @@
   (let [text (slurp (if (zero? (count args))
                       "/tmp/test.txt"
                       (first args)))]
-    (binding [analysis/targets (analysis/proper-nouns text)]
+    (binding [analysis/targets (analysis/proper-nouns text 5)]
       (let [file-name (if (zero? (count args))
                         "/tmp/test.txt"
                         (first args))

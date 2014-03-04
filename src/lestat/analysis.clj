@@ -6,13 +6,13 @@
 (def regexp-chapter-markdown #"=====+")
 (def regexp-chapter regexp-chapter-markdown)
 (def regexp-word #"[\p{IsAlphabetic}|-]+")
-(def regexp-name #"\p{IsAlphabetic} (\p{Lu}[\p{IsAlphabetic}|-]*)")
+(def regexp-name #"\p{IsAlphabetic} (\p{Lu}[\p{IsAlphabetic}|-]+)")
 
 ;; display preferences 
 ;; todo: add gui
 (def prefs-marker? false) ;; whether there are markers or not
-(def prefs-floating-window 50000) ;; number of words to do stats
-(def prefs-floating-step 1000) ;; step between each computation
+(def prefs-floating-window 50000) ;; number of chars to do stats
+(def prefs-floating-step 2000) ;; step between each computation
 (def prefs-threshold-noun 25000) ;; max period of occurrence of a proper noun
 
 ;; todo: remove following and add gui
@@ -125,12 +125,16 @@
        chart)))
 
 (defn proper-nouns
-  [text]
-  "String -> List of Strings
+  "String, Max -> List of Strings
    Try to identify proper nouns of a text."
-  (let [candidates (map second (re-seq regexp-name text))
-        threshold (/ (count text) prefs-threshold-noun)]
-    (->> candidates
-        frequencies
-        (filter #(> (val %) threshold))
-        (map #(list (first %))))))
+  ([text]
+     (proper-nouns text 100))
+  ([text max]
+     (let [candidates (map second (re-seq regexp-name text))
+           threshold (/ (count text) prefs-threshold-noun)]
+       (->> candidates
+            frequencies
+            (filter #(> (val %) threshold))
+            (sort #(< (val %2) (val %1)))
+            (take max)
+            (map #(list (first %)))))))
