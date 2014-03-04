@@ -10,8 +10,8 @@
 ;; display preferences 
 ;; todo: add gui
 (def prefs-marker? false) ;; whether there are markers or not
-(def prefs-floating-window 20000) ;; number of words to do stats
-(def prefs-floating-step 200) ;; step between each computation
+(def prefs-floating-window 50000) ;; number of words to do stats
+(def prefs-floating-step 1000) ;; step between each computation
 
 ;; todo: remove following and add gui
 (def file-name "/tmp/test.txt")
@@ -25,20 +25,12 @@
                ("Shade")
                ("Elvira")))
 
-
-
 (defn split-chapters 
   [text]
   "String -> List of Strings
    Split a string (containing whole text) into strings corresponding
    to each chapter"
   (remove empty? (clojure.string/split text regexp-chapter)))
-
-(defn split-words
-  [text]
-  "String->List of Strings
-   Split a string into strings corresponding to words."
-  (re-seq regexp-word text))
 
 (defn character-pattern
   [character]
@@ -48,38 +40,71 @@
                    (clojure.string/join "|" character)
                    "")))
 
-(defn count-character
-  [words character]
-  "List of words, List of aliases -> hashmap
-   Return a (single-element) hashmap giving the occurrences of 
-   a given character's name(s)"
-  {(first character) (count (filter (set character) words))})
+(defn find-pos
+  [character text]
+  "List of Strings, String -> List of positions
+   Gives all position of mentions of a character"
+  (let [pattern (character-pattern character)]
+    (loop [matcher (re-matcher pattern text)
+           result []]
+      (if (.find matcher)
+        (recur matcher
+               (conj result (.start matcher)))
+        result))))
 
-(defn count-all-characters
-  [words]
-  "List of words -> hashmap
-   Return a hasmap giving the occurences for each characters"
+(defn find-pos-all-characters
+  [text]
+  "String -> hashmap
+  Apply find-pos on all characters, and returns a hashmap with results"
   (into {}
-        (map #(count-character words %) targets)))
+        (for [character targets]
+          {(first character) (find-pos character text)})))
+
+
+(defn data-from-positions
+  [positions]
+  "[Hashmap -> Data]
+   Transform a map associating characters and positions
+   to a map associating characters and occurrences"
+  (into {}
+        (map (fn [x]
+               {(first x)
+                (count (second x))})
+             positions)))
+
+(defn data-minimal
+  [text]
+  "String -> hasmap
+   Return minimal global data for all text"
+  (-> text
+      find-pos-all-characters
+      data-from-positions))
+
+(defn data-by-floating-window
+  [text]
+  "String -> Data
+   Use find-pos-all-characters to compute set of data every 
+   prefs-floating-steps"
+  (let [n prefs-floating-window
+        step prefs-floating-step
+        tmp-data (find-pos-all-characters text)
+        end (- (count text) n)]
+    (for [i (range 0 end step)]
+      (into {}
+            (map (fn [x]
+                   {(first x)
+                    (count (filter #(<= i % (+ i n))
+                                   (second x)))})
+                 tmp-data)))))
 
 (defn data-by-chapters
   [text]
   "String -> Data
    Give statistics for all chapters"
-  (map count-all-characters
-       (map split-words
-            (split-chapters text))))
-
-(defn data-by-words
-  [text]
-  "String -> Data
-   Give statistics for each chunk of prefs-floating-window words"
-  (doall
-  (pmap count-all-characters
-       (partition prefs-floating-window 
-                  prefs-floating-step 
-                  (split-words text)))))
-
+  (->> text
+       split-chapters
+       (map data-minimal)))
+    
 (defn data->chart
   "Data, List of Strings? -> Chart
    Converts data to a chart which can be displayed. Only data related
@@ -97,8 +122,3 @@
              (.setMarker ^Series series SeriesMarker/NONE))))
        chart)))
 
-(defn data-minimal
-  [text]
-  "String -> hasmap
-   Return minimal global data for all text"
-  (count-all-characters (split-words text)))
