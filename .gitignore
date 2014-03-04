@@ -2,5 +2,12 @@ pom.xml
 *jar
 /lib/
 /classes/
-/targets/
+/target
+/checkouts
+pom.xml.asc
+*.class
+.lein-failures
+.lein-plugins
+.lein-repl-history
 .lein-deps-sum
+*~
