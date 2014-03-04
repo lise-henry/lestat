@@ -74,10 +74,11 @@
   [text]
   "String -> Data
    Give statistics for each chunk of prefs-floating-window words"
-  (map count-all-characters
+  (doall
+  (pmap count-all-characters
        (partition prefs-floating-window 
                   prefs-floating-step 
-                  (split-words text))))
+                  (split-words text)))))
 
 (defn data->chart
   "Data, List of Strings? -> Chart
@@ -93,7 +94,7 @@
                            (map double)
                            (.addSeries chart n nil))]
            (if-not prefs-marker?
-             (.setMarker series SeriesMarker/NONE))))
+             (.setMarker ^Series series SeriesMarker/NONE))))
        chart)))
 
 (defn data-minimal

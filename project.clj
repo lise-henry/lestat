@@ -6,4 +6,5 @@
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [com.xeiam.xchart/xchart "2.3.1"]]
   :source-paths ["src"]
-  :main lestat.core)
+  :main lestat.core
+  :global-vars {*warn-on-reflection* true})
