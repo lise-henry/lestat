@@ -17,7 +17,7 @@
 
 ;; todo: remove following and add gui
 (def file-name "/tmp/test.txt")
-(def targets '(("Razor" "Raz")
+(def ^:dynamic targets '(("Razor" "Raz")
                ("Crow" "Kro")
                ("Cassandra" "Casse")
                ("Karima" "K")
@@ -132,4 +132,5 @@
         threshold (/ (count text) prefs-threshold-noun)]
     (->> candidates
         frequencies
-        (filter #(> (val %) threshold)))))
+        (filter #(> (val %) threshold))
+        (map #(list (first %))))))

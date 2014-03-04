@@ -7,12 +7,22 @@
 (defn -main
   "Main function"
   [& args]
-  (let [file-name "/tmp/test.txt"
-        text (slurp file-name)
-        data (analysis/data-by-floating-window text)
-        chart (analysis/data->chart data)]
-    (.setChartTitle ^Chart chart "Résultats")
-    (.setLegendPosition ^StyleManager (.getStyleManager ^Chart chart) StyleManager$LegendPosition/InsideNE)
-    (.displayChart (SwingWrapper. ^Chart chart))))
-    
+  (let [text (slurp (if (zero? (count args))
+                      "/tmp/test.txt"
+                      (first args)))]
+    (binding [analysis/targets (analysis/proper-nouns text)]
+      (let [file-name (if (zero? (count args))
+                        "/tmp/test.txt"
+                        (first args))
+            text (slurp file-name)
+            data (analysis/data-by-floating-window text)
+            
+            chart (analysis/data->chart data)]
+        (.setChartTitle ^Chart chart "Résultats")
+        (.setLegendPosition ^StyleManager (.getStyleManager ^Chart chart) StyleManager$LegendPosition/InsideNE)
+        (.displayChart (SwingWrapper. ^Chart chart))))))
   
+  
+
+
+
