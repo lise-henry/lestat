@@ -99,6 +99,17 @@
   (->> text
        split-chapters
        (map data-minimal)))
+
+(defn absolute->percent
+  [data]
+  "Data -> Data
+   Convent absolute data to data in percent"
+  (for [row data]
+    (let [sum (reduce #(+ (val %2) %1) 0 row)]
+      (if (zero? sum)
+        row
+        (into {} (map #(array-map (key %) (/ (val %) sum)) row))))))
+                      
     
 (defn data->chart
   "Data, List of Strings? -> Chart

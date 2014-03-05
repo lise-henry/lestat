@@ -95,7 +95,10 @@ You can either enter those manually, or try to use the auto-detect function.")])
                        percent? (= (sc/config (sc/selection bg-view) :id) :percent)
                        data (if chapters? 
                               (analysis/data-by-chapters text)
-                              (analysis/data-by-floating-window text))]
+                              (analysis/data-by-floating-window text))
+                       data (if percent?
+                              (analysis/absolute->percent data)
+                              data)]
                    (sc/config! main-frame :content (view-data data))
                    (sc/pack! main-frame))))
     panel))
