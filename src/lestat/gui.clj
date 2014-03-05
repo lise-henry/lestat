@@ -201,14 +201,27 @@ You can either enter those manually, or try to use the auto-detect function.")])
                                    (sc/pack! main-frame)))
         quit (sc/action :name "Quit"
                         :handler (fn [e]
-                                   (java.lang.System/exit 0)))        characters (sc/action :name "Character stats"
+                                   (java.lang.System/exit 0)))
+        about (sc/action :name "About"
+                         :handler (fn [e]
+                                    (->> (sc/frame :title "About"
+                                         :on-close :dispose
+                                         :content (sc/text :multi-line? true
+                                                           :focusable? true
+                                                           :text 
+                                                           "Lestat, version 0.1
+https://github.com/lady-segfault/lestat
+Copyright 2014 Élisabeth Henry
+This is free software. You have permission to copy, modify and distribute this program under the conditions of the GNU General Public License."))
+                                    sc/pack!
+                                    sc/show!)))
+        characters (sc/action :name "Character stats"
                               :handler (fn [e]
                                          (switch-view @config/file-name  choose-characters)))
         dialogs (sc/action :name "Dialog/narration repartition"
                            :handler (fn [e]
                                       (switch-view @config/file-name dialog-settings)))
-        edit (sc/action :name "Edit")
-        about (sc/action :name "About")]
+        edit (sc/action :name "Edit")]
     (sc/menubar :items
                 [(sc/menu :text "File" :items [open quit])
                  (sc/menu :text "View" :items [characters dialogs])
