@@ -1,26 +1,27 @@
 (ns lestat.core
   (:gen-class)
-  (:require [lestat.analysis :as analysis])
+  (:require [lestat.analysis :as analysis]
+            [lestat.gui :as gui])
   (:import (javax.swing JFrame)
-           (com.xeiam.xchart Chart SwingWrapper StyleManager StyleManager$LegendPosition)))
+           (com.xeiam.xchart Chart SwingWrapper StyleManager StyleManager$LegendPosition XChartPanel))
+  (:use seesaw.core))
 
 (defn -main
   "Main function"
   [& args]
-  (let [text (slurp (if (zero? (count args))
-                      "/tmp/test.txt"
-                      (first args)))]
-    (binding [analysis/targets (analysis/proper-nouns text 5)]
-      (let [file-name (if (zero? (count args))
-                        "/tmp/test.txt"
-                        (first args))
-            text (slurp file-name)
-            data (analysis/data-by-floating-window text)
-            
-            chart (analysis/data->chart data)]
-        (.setChartTitle ^Chart chart "Résultats")
-        (.setLegendPosition ^StyleManager (.getStyleManager ^Chart chart) StyleManager$LegendPosition/InsideNE)
-        (.displayChart (SwingWrapper. ^Chart chart))))))
+;          data (analysis/data-by-floating-window text)
+;          chart (analysis/data->chart data)]
+;      (.setChartTitle ^Chart chart "Résultats")
+;      (.setLegendPosition ^StyleManager (.getStyleManager ^Chart chart) StyleManager$LegendPosition/InsideSW)
+  (gui/main-window))
+; (XChartPanel. ^Chart chart)))))))
+
+
+;; o         (-> (frame :title "Lestat"
+;;                     :on-close :exit
+;;                     :content (XChartPanel. ^Chart chart))
+;;              pack!
+;;              show!))))))
   
   
 

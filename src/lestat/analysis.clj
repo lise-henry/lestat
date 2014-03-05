@@ -1,4 +1,6 @@
 (ns lestat.analysis
+  (:require [clojure.string]
+            [lestat.config :as config])
   (:import (com.xeiam.xchart Chart Series SeriesMarker)))
 
 ;; default parameters
@@ -17,15 +19,6 @@
 
 ;; todo: remove following and add gui
 (def file-name "/tmp/test.txt")
-(def ^:dynamic targets '(("Razor" "Raz")
-               ("Crow" "Kro")
-               ("Cassandra" "Casse")
-               ("Karima" "K")
-               ("Cookie" "Cook")
-               ("Betty" "Bête")
-               ("Morgue")
-               ("Shade")
-               ("Elvira")))
 
 (defn split-chapters 
   [text]
@@ -59,7 +52,7 @@
   "String -> hashmap
   Apply find-pos on all characters, and returns a hashmap with results"
   (into {}
-        (for [character targets]
+        (for [character @config/targets]
           {(first character) (find-pos character text)})))
 
 
@@ -112,7 +105,7 @@
    Converts data to a chart which can be displayed. Only data related
    to characters in names are selected (all by default)."
   ([data]
-     (data->chart data (map first targets)))
+     (data->chart data (map first @config/targets)))
   ([data names]
      (let [chart (Chart. 500 300)]
        (doseq [n names]
@@ -138,3 +131,17 @@
             (sort #(< (val %2) (val %1)))
             (take max)
             (map #(list (first %)))))))
+
+(defn characters->string
+  [characters]
+  "Converts a list of characters to a string"
+  (clojure.string/join "\n"
+                       (map #(clojure.string/join ", " %)
+                            characters)))
+
+(defn string->characters
+  [text]
+  "Converts a string (input by user) to a list of characters.
+   Returns nil if input is not correct."
+  (let [lines (remove empty? (clojure.string/split-lines text))]
+    (map #(clojure.string/split % #", *") lines)))
