@@ -9,12 +9,15 @@
 (def regexp-chapter regexp-chapter-markdown)
 (def regexp-word #"[\p{IsAlphabetic}|-]+")
 (def regexp-name #"\p{IsAlphabetic} (\p{Lu}[\p{IsAlphabetic}|-]+)")
+(def regexp-dialog #"^(?: | |\t)*(?:«|\"|-|—|–|')")
 
 ;; display preferences 
 ;; todo: add gui
 (def prefs-marker? false) ;; whether there are markers or not
 (def prefs-floating-window 50000) ;; number of chars to do stats
 (def prefs-floating-step 2000) ;; step between each computation
+(def prefs-lines-window 200) ;; number of lines to take
+(def prefs-lines-step 10)
 (def prefs-threshold-noun 25000) ;; max period of occurrence of a proper noun
 
 ;; todo: remove following and add gui
@@ -99,6 +102,46 @@
   (->> text
        split-chapters
        (map data-minimal)))
+
+(defn dialog?
+  [line]
+  "String -> Boolean
+   Return true if the line is a line of dialog, false else"
+  (not (nil? (re-seq regexp-dialog line))))
+
+
+(defn dialog-data-lines
+  [lines]
+  "List of Strings -> Data entry
+   Compute proportion of dialog and narration in a list of lines"
+  (let [n-dialog (count (filter dialog? lines))]
+    {"Dialog" n-dialog
+     "Narration" (- (count lines) n-dialog)}))
+
+(defn dialog-data-chunk
+  [text]
+  "String -> Data entry
+   Compute proportion of dialog and narration in a portion of text"
+  (-> text
+      clojure.string/split-lines
+      dialog-data-lines))
+
+(defn dialog-data-by-chapters
+  [text]
+  "String -> Data
+   Return data on dialog proportion, divising by chapters"
+  (->> text
+      split-chapters
+      (map dialog-data-chunk)))
+
+(defn dialog-data-by-window
+  [text]
+  "String -> Data
+   Return data on dialog proportion, divising by number of lines"
+  (->> text
+       clojure.string/split-lines
+       (partition prefs-lines-window prefs-lines-step)
+       (map dialog-data-lines)))
 
 (defn absolute->percent
   [data]
