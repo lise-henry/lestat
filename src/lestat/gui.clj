@@ -21,6 +21,8 @@
         go-button (sc/button :text "View")
         bg-data (sc/button-group)
         bg-view (sc/button-group)
+        spinner (sc/spinner :model 
+                            (sc/spinner-model 10 :from 1 :to 30 :by 1))
         items ["Data by..."
                (sc/radio :id :chapters :group bg-data :text "chapters" :selected? true)
                (sc/radio :id :window :group bg-data :text "sliding window")
@@ -28,14 +30,14 @@
                (sc/radio :id :percent :group bg-view :text "percent")
                go-button]  
         panel (sc/border-panel :minimum-size [640 :by 480]
-                               :south find-button
+                               :south (sc/horizontal-panel :items [find-button "Select only " spinner " more frequent"])
                                :center (sc/scrollable area)
                                :north "Now, we need to know what words correspond to characters names.
 You can either enter those manually, or try to use the auto-detect function."
                                :east (sc/vertical-panel :items items))]
     (sc/listen find-button :action
                (fn [e]
-                 (let [c (analysis/proper-nouns text)]
+                 (let [c (analysis/proper-nouns text (sc/selection spinner))]
                    (swap! config/targets (constantly c))
                    (sc/text! area 
                              (analysis/characters->string c)))))
