@@ -62,10 +62,16 @@
                (sc/radio :id :absolute :group bg-view :text "absolute value" :selected? true)
                (sc/radio :id :percent :group bg-view :text "percent")
                go-button]  
-        panel (sc/border-panel :minimum-size [640 :by 480]
-                               :center (sc/vertical-panel :items [(sc/scrollable area)
-                                                                  (sc/horizontal-panel :items [find-button "Select only " spinner " more frequent"])])
-                               :north (sc/horizontal-panel :items [back-button 
+        panel (sc/border-panel :vgap 5
+                               :hgap 5
+                               :border 5
+                               :minimum-size [640 :by 480]
+                               :center (sc/vertical-panel :border 5
+                                                          :items [(sc/scrollable area)
+                                                                  (sc/horizontal-panel :border 5
+                                                                                       :items [find-button "Select only " spinner " more frequent"])])
+                               :north (sc/horizontal-panel :border 5
+                                                           :items [back-button 
                                                                    (sc/text :multi-line? true
                                                                             :editable? false 
                                                                             :focusable? false
@@ -107,7 +113,10 @@ You can either enter those manually, or try to use the auto-detect function.")])
                          "No file selected"
                          @config/file-name))
         ok-button (sc/button :text "OK")
-        panel (sc/border-panel :minimum-size [640 :by 480]
+        panel (sc/border-panel :vgap 5
+                               :hgap 5
+                               :border 5
+                               :minimum-size [640 :by 480]
                                :north txt
                                :west field
                                :east button
