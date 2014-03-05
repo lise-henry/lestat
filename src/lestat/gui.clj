@@ -6,21 +6,30 @@
             [seesaw.font :as sf])
   (:import (com.xeiam.xchart Chart StyleManager$LegendPosition XChartPanel StyleManager)))
 
-(def menubar 
-  (sc/menubar :items
-              [(sc/menu :text "File" :items [])
-               (sc/menu :text "View" :items [])
-               (sc/menu :text "About" :items [])]))
-               
 
 (def main-frame
   (sc/frame :title "Lestat"
             :size [640 :by 480]
-;            :menubar menubar
             :on-close :dispose))
+
 
 (declare choose-file)
 (declare choose-characters)
+
+(defn menubar
+  []
+  "() -> Menubar
+   Set actions and items for menubar and returns it"
+  (let [open (sc/action :name "Load file"
+                        :handler (fn [e]
+                                   (sc/config! main-frame :content (choose-file))
+                                   (sc/pack! main-frame)))
+        edit (sc/action :name "Edit")
+        about (sc/action :name "About")]
+    (sc/menubar :items
+                [(sc/menu :text "File" :items [open])
+                 (sc/menu :text "Settings" :items [edit])
+                             (sc/menu :text "Help" :items [about])])))
 
 (defn listen-to-file-selection
   [button]
@@ -197,5 +206,6 @@ You can either enter those manually, or try to use the auto-detect function.")])
   (sc/native!)
   (-> main-frame
       (sc/config! :content (choose-file))
+      (sc/config! :menubar (menubar))
       sc/pack!
       sc/show!))
