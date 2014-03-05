@@ -159,10 +159,8 @@
    Converts data to a chart which can be displayed. Only data related
    to characters in names are selected (all by default)."
   ([data]
-     (data->chart data (map first @config/targets)))
-  ([data names]
      (let [chart (Chart. 500 300)]
-       (doseq [n names]
+       (doseq [n (map first(first data))]
          (let [series (->> data
                            (map #(% n))
                            (map double)

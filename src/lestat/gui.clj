@@ -22,8 +22,35 @@
 (declare choose-file)
 (declare choose-characters)
 
+(defn listen-to-file-selection
+  [button]
+  "Button -> ()
+   Add a listener whose action is to go back at beginning of program"
+  (sc/listen button :action
+             (fn [e]
+               (sc/config! main-frame :content (choose-file))
+               (sc/pack! main-frame))))
+
+(defn listen-from-file-selection
+  [button field next-step]
+  "Add a listener whose action is to check file-name is ok and move next step"
+  (println next-step)
+  (sc/listen button :action
+             (fn [e]
+               (let [file-name (sc/config field :text)
+                     f (java.io.File. file-name)]
+                 (if (.canRead f)
+                   (do
+                     (swap! config/file-name (constantly file-name))
+                     (sc/config! main-frame :content
+                                 (next-step))
+                       (sc/pack! main-frame))
+                     (sc/alert e (str "Can't read file \"" 
+                                      file-name
+                                      "\"")))))))
+
 (defn view-data
-  [data]
+  [data prev-step]
   "Create a panel with a chart to view data"
   (let [chart (analysis/data->chart data)
         back-button (sc/button :text "Back")
@@ -39,9 +66,39 @@
     (.setLegendPosition ^StyleManager (.getStyleManager ^Chart chart) StyleManager$LegendPosition/InsideSW)
     (sc/listen back-button :action 
                (fn [e]
-                 (sc/config! main-frame :content (choose-characters))
+                 (sc/config! main-frame :content (prev-step))
                  (sc/pack! main-frame)))
     (sc/vertical-panel :items [panel (XChartPanel. ^Chart chart)])))
+
+(defn dialog-settings
+  []
+  "Create a panel allowing to set parameters for dialog repartition"
+  (let [text (slurp @config/file-name)
+        go-button (sc/button :text "View")
+        back-button (sc/button :text "Back")
+        bg-data (sc/button-group)
+        bg-view (sc/button-group)
+        items ["Data by..."
+               (sc/radio :id :chapters :group bg-data :text "chapters" :selected? true)
+               (sc/radio :id :window :group bg-data :text "sliding window")
+               (sc/radio :id :absolute :group bg-view :text "absolute value" :selected? true)
+               (sc/radio :id :percent :group bg-view :text "percent")
+               (sc/horizontal-panel :items [back-button go-button])]
+        panel (sc/vertical-panel :items items)]
+    (listen-to-file-selection back-button)
+    (sc/listen go-button :action
+               (fn [e]
+                 (let [chapters? (= (sc/config (sc/selection bg-data) :id) :chapters)
+                       percent? (= (sc/config (sc/selection bg-view) :id) :percent)
+                       data (if chapters? 
+                              (analysis/dialog-data-by-chapters text)
+                              (analysis/dialog-data-by-window text))
+                       data (if percent?
+                              (analysis/absolute->percent data)
+                              data)]
+                   (sc/config! main-frame :content (view-data data dialog-settings))
+                   (sc/pack! main-frame))))
+    panel))
 
 (defn choose-characters
   []
@@ -78,10 +135,7 @@
                                                                             :text "Now, we need to know what words correspond to characters names.
 You can either enter those manually, or try to use the auto-detect function.")])
                                :east (sc/vertical-panel :items items))]
-    (sc/listen back-button :action
-               (fn [e]
-                 (sc/config! main-frame :content (choose-file))
-                 (sc/pack! main-frame)))
+    (listen-to-file-selection back-button)
     (sc/listen find-button :action
                (fn [e]
                  (let [c (analysis/proper-nouns text (sc/selection spinner))]
@@ -99,7 +153,7 @@ You can either enter those manually, or try to use the auto-detect function.")])
                        data (if percent?
                               (analysis/absolute->percent data)
                               data)]
-                   (sc/config! main-frame :content (view-data data))
+                   (sc/config! main-frame :content (view-data data choose-characters))
                    (sc/pack! main-frame))))
     panel))
         
@@ -115,7 +169,8 @@ You can either enter those manually, or try to use the auto-detect function.")])
         field (sc/text (if (empty? @config/file-name)
                          "No file selected"
                          @config/file-name))
-        ok-button (sc/button :text "OK")
+        character-button (sc/button :text "Character repartition")
+        dialog-button (sc/button :text "Dialog/narration stats")
         panel (sc/border-panel :vgap 5
                                :hgap 5
                                :border 5
@@ -123,7 +178,7 @@ You can either enter those manually, or try to use the auto-detect function.")])
                                :north txt
                                :west field
                                :east button
-                               :south ok-button)]
+                               :south (sc/horizontal-panel :items [character-button dialog-button]))]
     (sc/listen button :action 
                (fn [e]
                  (let [f (sch/choose-file)]
@@ -131,20 +186,9 @@ You can either enter those manually, or try to use the auto-detect function.")])
                      (do (sc/text! field (str f))
                          (sc/pack! main-frame))
                      nil))))
-    (sc/listen ok-button :action
-               (fn [e]
-                 (let [file-name (sc/config field :text)
-                       f (java.io.File. file-name)]
-                   (if (.canRead f)
-                     (do
-                       (swap! config/file-name (constantly file-name))
-                       (sc/config! main-frame :content
-                                   (choose-characters))
-                       (sc/pack! main-frame))
-                     (sc/alert e (str "Can't read file \"" 
-                                      file-name
-                                      "\""))))))
-  panel))
+    (listen-from-file-selection character-button field choose-characters)
+    (listen-from-file-selection dialog-button field dialog-settings)
+    panel))
 
 
 (defn main-window
