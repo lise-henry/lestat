@@ -16,20 +16,6 @@
 (declare choose-file)
 (declare choose-characters)
 
-(defn menubar
-  []
-  "() -> Menubar
-   Set actions and items for menubar and returns it"
-  (let [open (sc/action :name "Load file"
-                        :handler (fn [e]
-                                   (sc/config! main-frame :content (choose-file))
-                                   (sc/pack! main-frame)))
-        edit (sc/action :name "Edit")
-        about (sc/action :name "About")]
-    (sc/menubar :items
-                [(sc/menu :text "File" :items [open])
-                 (sc/menu :text "Settings" :items [edit])
-                             (sc/menu :text "Help" :items [about])])))
 
 (defn listen-to-file-selection
   [button]
@@ -40,23 +26,28 @@
                (sc/config! main-frame :content (choose-file))
                (sc/pack! main-frame))))
 
+(defn switch-view
+  [file-name next-step]
+  "String, Function -> ()
+   Switch view to choose-characters or dialog stats"
+  (let [f (java.io.File. file-name)]
+    (if (.canRead f)
+      (do
+        (swap! config/file-name (constantly file-name))
+        (sc/config! main-frame :content
+                    (next-step))
+        (sc/pack! main-frame))
+      (sc/alert (str "Can't read file \"" 
+                       file-name
+                       "\"")))))
+
 (defn listen-from-file-selection
   [button field next-step]
   "Add a listener whose action is to check file-name is ok and move next step"
-  (println next-step)
   (sc/listen button :action
              (fn [e]
-               (let [file-name (sc/config field :text)
-                     f (java.io.File. file-name)]
-                 (if (.canRead f)
-                   (do
-                     (swap! config/file-name (constantly file-name))
-                     (sc/config! main-frame :content
-                                 (next-step))
-                       (sc/pack! main-frame))
-                     (sc/alert e (str "Can't read file \"" 
-                                      file-name
-                                      "\"")))))))
+               (let [file-name (sc/config field :text)]
+                 (switch-view file-name next-step)))))
 
 (defn view-data
   [data prev-step]
@@ -198,6 +189,31 @@ You can either enter those manually, or try to use the auto-detect function.")])
     (listen-from-file-selection character-button field choose-characters)
     (listen-from-file-selection dialog-button field dialog-settings)
     panel))
+
+
+(defn menubar
+  []
+  "() -> Menubar
+   Set actions and items for menubar and returns it"
+  (let [open (sc/action :name "Load file"
+                        :handler (fn [e]
+                                   (sc/config! main-frame :content (choose-file))
+                                   (sc/pack! main-frame)))
+        quit (sc/action :name "Quit"
+                        :handler (fn [e]
+                                   (java.lang.System/exit 0)))        characters (sc/action :name "Character stats"
+                              :handler (fn [e]
+                                         (switch-view @config/file-name  choose-characters)))
+        dialogs (sc/action :name "Dialog/narration repartition"
+                           :handler (fn [e]
+                                      (switch-view @config/file-name dialog-settings)))
+        edit (sc/action :name "Edit")
+        about (sc/action :name "About")]
+    (sc/menubar :items
+                [(sc/menu :text "File" :items [open quit])
+                 (sc/menu :text "View" :items [characters dialogs])
+                 (sc/menu :text "Settings" :items [edit])
+                 (sc/menu :text "Help" :items [about])])))
 
 
 (defn main-window

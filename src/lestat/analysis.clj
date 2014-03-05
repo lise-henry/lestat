@@ -4,31 +4,16 @@
   (:import (com.xeiam.xchart Chart Series SeriesMarker)))
 
 ;; default parameters
-(def regexp-chapter-text #"Chapitre \d")
-(def regexp-chapter-markdown #"=====+")
-(def regexp-chapter regexp-chapter-markdown)
 (def regexp-word #"[\p{IsAlphabetic}|-]+")
 (def regexp-name #"\p{IsAlphabetic} (\p{Lu}[\p{IsAlphabetic}|-]+)")
 (def regexp-dialog #"^(?: | |\t)*(?:«|\"|-|—|–|')")
-
-;; display preferences 
-;; todo: add gui
-(def prefs-marker? false) ;; whether there are markers or not
-(def prefs-floating-window 50000) ;; number of chars to do stats
-(def prefs-floating-step 2000) ;; step between each computation
-(def prefs-lines-window 200) ;; number of lines to take
-(def prefs-lines-step 10)
-(def prefs-threshold-noun 25000) ;; max period of occurrence of a proper noun
-
-;; todo: remove following and add gui
-(def file-name "/tmp/test.txt")
 
 (defn split-chapters 
   [text]
   "String -> List of Strings
    Split a string (containing whole text) into strings corresponding
    to each chapter"
-  (remove empty? (clojure.string/split text regexp-chapter)))
+  (remove empty? (clojure.string/split text (re-pattern (@config/prefs :regexp-chapter)))))
 
 (defn character-pattern
   [character]
@@ -82,9 +67,9 @@
   [text]
   "String -> Data
    Use find-pos-all-characters to compute set of data every 
-   prefs-floating-steps"
-  (let [n prefs-floating-window
-        step prefs-floating-step
+   char-step"
+  (let [n (@config/prefs :char-window)
+        step (@config/prefs :char-step)
         tmp-data (find-pos-all-characters text)
         end (- (count text) n)]
     (for [i (range 0 end step)]
@@ -140,7 +125,7 @@
    Return data on dialog proportion, divising by number of lines"
   (->> text
        clojure.string/split-lines
-       (partition prefs-lines-window prefs-lines-step)
+       (partition (@config/prefs :lines-window) (@config/prefs :lines-step))
        (map dialog-data-lines)))
 
 (defn absolute->percent
@@ -165,7 +150,7 @@
                            (map #(% n))
                            (map double)
                            (.addSeries chart n nil))]
-           (if-not prefs-marker?
+           (if-not (@config/prefs :marker?)
              (.setMarker ^Series series SeriesMarker/NONE))))
        chart)))
 
@@ -176,7 +161,7 @@
      (proper-nouns text 100))
   ([text max]
      (let [candidates (map second (re-seq regexp-name text))
-           threshold (/ (count text) prefs-threshold-noun)]
+           threshold (/ (count text) (@config/prefs :threshold-noun))]
        (->> candidates
             frequencies
             (filter #(> (val %) threshold))
