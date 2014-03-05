@@ -41,6 +41,7 @@ You can either enter those manually, or try to use the auto-detect function."
                              (analysis/characters->string c)))))
     (sc/listen go-button :action
                (fn [e]
+                 (swap! config/targets (constantly (analysis/string->characters (sc/text area))))
                  (let [chapters? (= (sc/config (sc/selection bg-data) :id) :chapters)
                        percent? (= (sc/config (sc/selection bg-view) :id) :percent)
                        data (if chapters? 
