@@ -5,7 +5,7 @@
                      ("Character2")
                      ("Character3"))))
 
-(def prefs (atom {:marker? falseg
+(def prefs (atom {:marker? false
                   :char-window 50000
                   :char-step 2000
                   :lines-window 200
