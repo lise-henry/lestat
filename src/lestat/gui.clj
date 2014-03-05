@@ -6,10 +6,42 @@
             [seesaw.font :as sf])
   (:import (com.xeiam.xchart Chart StyleManager$LegendPosition XChartPanel StyleManager)))
 
+(def menubar 
+  (sc/menubar :items
+              [(sc/menu :text "File" :items [])
+               (sc/menu :text "View" :items [])
+               (sc/menu :text "About" :items [])]))
+               
+
 (def main-frame
   (sc/frame :title "Lestat"
             :size [640 :by 480]
+;            :menubar menubar
             :on-close :dispose))
+
+(declare choose-file)
+(declare choose-characters)
+
+(defn view-data
+  [data]
+  "Create a panel with a chart to view data"
+  (let [chart (analysis/data->chart data)
+        back-button (sc/button :text "Back")
+        stats (str "File: "
+                   @config/file-name
+                   " ("
+                   (count (slurp @config/file-name))
+                   "cars), analysis on "
+                   (count @config/targets)
+                   " named characters")
+        panel (sc/horizontal-panel :items [back-button stats])]
+    (.setChartTitle ^Chart chart "Character 'popularity'")
+    (.setLegendPosition ^StyleManager (.getStyleManager ^Chart chart) StyleManager$LegendPosition/InsideSW)
+    (sc/listen back-button :action 
+               (fn [e]
+                 (sc/config! main-frame :content (choose-characters))
+                 (sc/pack! main-frame)))
+    (sc/vertical-panel :items [panel (XChartPanel. ^Chart chart)])))
 
 (defn choose-characters
   []
@@ -17,6 +49,7 @@
   (let [text (slurp @config/file-name)
         area (sc/text :multi-line? true
                         :text (analysis/characters->string @config/targets))
+        back-button (sc/button :text "Back")
         find-button (sc/button :text "Auto-detect characters names")
         go-button (sc/button :text "View")
         bg-data (sc/button-group)
@@ -30,11 +63,19 @@
                (sc/radio :id :percent :group bg-view :text "percent")
                go-button]  
         panel (sc/border-panel :minimum-size [640 :by 480]
-                               :south (sc/horizontal-panel :items [find-button "Select only " spinner " more frequent"])
-                               :center (sc/scrollable area)
-                               :north "Now, we need to know what words correspond to characters names.
-You can either enter those manually, or try to use the auto-detect function."
+                               :center (sc/vertical-panel :items [(sc/scrollable area)
+                                                                  (sc/horizontal-panel :items [find-button "Select only " spinner " more frequent"])])
+                               :north (sc/horizontal-panel :items [back-button 
+                                                                   (sc/text :multi-line? true
+                                                                            :editable? false 
+                                                                            :focusable? false
+                                                                            :text "Now, we need to know what words correspond to characters names.
+You can either enter those manually, or try to use the auto-detect function.")])
                                :east (sc/vertical-panel :items items))]
+    (sc/listen back-button :action
+               (fn [e]
+                 (sc/config! main-frame :content (choose-file))
+                 (sc/pack! main-frame)))
     (sc/listen find-button :action
                (fn [e]
                  (let [c (analysis/proper-nouns text (sc/selection spinner))]
@@ -48,11 +89,8 @@ You can either enter those manually, or try to use the auto-detect function."
                        percent? (= (sc/config (sc/selection bg-view) :id) :percent)
                        data (if chapters? 
                               (analysis/data-by-chapters text)
-                              (analysis/data-by-floating-window text))
-                       chart (analysis/data->chart data)]
-                   (.setChartTitle ^Chart chart "Stats")
-                   (.setLegendPosition ^StyleManager (.getStyleManager ^Chart chart) StyleManager$LegendPosition/InsideSW)
-                   (sc/config! main-frame :content (XChartPanel. ^Chart chart))
+                              (analysis/data-by-floating-window text))]
+                   (sc/config! main-frame :content (view-data data))
                    (sc/pack! main-frame))))
     panel))
         
